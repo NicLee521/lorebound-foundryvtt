@@ -4,7 +4,8 @@ const Lorebound = {
     id: MODULE_ID,
     settingsKey: {
         oauthConfig: "oauthConfig",
-        oauthToken: "oauthToken"
+        oauthToken: "oauthToken",
+        clientConfig: "clientConfig"
     },
     templatePaths: {
         settings: `modules/${MODULE_ID}/templates/settings.hbs`
@@ -25,17 +26,28 @@ Hooks.once("ready", () => {
 });
 
 function registerSettings() {
-    const defaultConfig = {
+    const defaultServerConfig = {
         clientSecret: "",
         redirectUrl: `${window.location.origin}/modules/${MODULE_ID}/oauth-callback.html`,
         scope: "openid profile"
+    };
+    const defaultClientConfig = {
+        worldId: "",
+        allowedJournals: ""
     };
 
     game.settings.register(MODULE_ID, Lorebound.settingsKey.oauthConfig, {
         scope: "world",
         config: false,
         type: Object,
-        default: defaultConfig
+        default: defaultServerConfig
+    });
+
+    game.settings.register(MODULE_ID, Lorebound.settingsKey.clientConfig, {
+        scope: "client",
+        config: false,
+        type: Object,
+        default: defaultClientConfig
     });
 
     game.settings.register(MODULE_ID, Lorebound.settingsKey.oauthToken, {
@@ -119,22 +131,70 @@ class LoreboundSettingsForm extends FormApplication {
 
 class LoreboundConfig {
     static get() {
-        const current = game.settings.get(MODULE_ID, Lorebound.settingsKey.oauthConfig);
+        const server = this.getServerConfig();
+        const client = this.getClientConfig();
+        const fallbackRedirect = `${window.location.origin}/modules/${MODULE_ID}/oauth-callback.html`;
+        const worldIdSource = client?.worldId ?? server?.worldId ?? "";
+        const allowedJournalsSource = client?.allowedJournals ?? server?.allowedJournals ?? "";
+        const normalizedAllowedJournals = Array.isArray(allowedJournalsSource)
+            ? allowedJournalsSource.join(", ")
+            : allowedJournalsSource ?? "";
         return {
             clientId: "foundry_app",
-            clientSecret: current?.clientSecret ?? "",
-            worldId: current?.worldId ?? "",
+            clientSecret: server?.clientSecret ?? "",
+            worldId: typeof worldIdSource === "string" ? worldIdSource : worldIdSource ? String(worldIdSource) : "",
             authorizeUrl: "https://auth.niclee.dev/authorize",
             tokenUrl: "https://auth.niclee.dev/token",
             apiBaseUrl: "https://apilorebound.niclee.dev/api",
-            redirectUrl: current?.redirectUrl ?? `${window.location.origin}/modules/${MODULE_ID}/oauth-callback.html`,
-            allowedJournals: current?.allowedJournals ?? null,
+            redirectUrl: server?.redirectUrl ?? fallbackRedirect,
+            scope: server?.scope ?? "openid profile",
+            allowedJournals: normalizedAllowedJournals
         };
     }
 
+    static getServerConfig() {
+        return game.settings.get(MODULE_ID, Lorebound.settingsKey.oauthConfig) ?? {};
+    }
+
+    static getClientConfig() {
+        return game.settings.get(MODULE_ID, Lorebound.settingsKey.clientConfig) ?? {};
+    }
+
     static async set(config) {
-        const merged = { ...this.get(), ...config };
-        return game.settings.set(MODULE_ID, Lorebound.settingsKey.oauthConfig, merged);
+        const fallbackRedirect = `${window.location.origin}/modules/${MODULE_ID}/oauth-callback.html`;
+        const server = this.getServerConfig();
+        const client = this.getClientConfig();
+
+        const sanitizedServer = { ...server };
+        delete sanitizedServer.worldId;
+        delete sanitizedServer.allowedJournals;
+
+        const serverUpdate = {
+            ...sanitizedServer,
+            clientSecret: config?.clientSecret ?? sanitizedServer?.clientSecret ?? "",
+            redirectUrl: config?.redirectUrl ?? sanitizedServer?.redirectUrl ?? fallbackRedirect,
+            scope: config?.scope ?? sanitizedServer?.scope ?? "openid profile"
+        };
+
+        const allowedJournalsValue = Array.isArray(config?.allowedJournals)
+            ? config.allowedJournals.join(", ")
+            : typeof config?.allowedJournals === "string"
+                ? config.allowedJournals.trim()
+                : config?.allowedJournals;
+        const worldIdValue = typeof config?.worldId === "string" ? config.worldId.trim() : config?.worldId;
+
+        const clientUpdate = {
+            ...client,
+            worldId: worldIdValue ?? client?.worldId ?? server?.worldId ?? "",
+            allowedJournals: allowedJournalsValue ?? client?.allowedJournals ?? server?.allowedJournals ?? ""
+        };
+
+        await Promise.all([
+            game.settings.set(MODULE_ID, Lorebound.settingsKey.oauthConfig, serverUpdate),
+            game.settings.set(MODULE_ID, Lorebound.settingsKey.clientConfig, clientUpdate)
+        ]);
+
+        return this.get();
     }
 }
 
@@ -321,7 +381,10 @@ class LoreboundSync {
     get config() {
         const config = LoreboundConfig.get();
         if (config.allowedJournals && typeof config.allowedJournals === "string") {
-            config.allowedJournals = config.allowedJournals.split(",").map(s => s.trim());
+            config.allowedJournals = config.allowedJournals
+                .split(",")
+                .map((s) => s.trim())
+                .filter((s) => s.length > 0);
         }
         return config;
     }
