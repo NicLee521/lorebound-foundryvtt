@@ -123,6 +123,7 @@ class LoreboundConfig {
         return {
             clientId: "foundry_app",
             clientSecret: current?.clientSecret ?? "",
+            worldId: current?.worldId ?? "",
             authorizeUrl: "https://auth.niclee.dev/authorize",
             tokenUrl: "https://auth.niclee.dev/token",
             apiBaseUrl: "https://apilorebound.niclee.dev/api",
@@ -334,18 +335,21 @@ class LoreboundSync {
     }
 
     async createJournalEntry(doc, options, userId) {
+        Lorebound.log("Creating journal entry", doc);
         const payload = {
             title: doc?.name,
-            content: doc?.text?.content || "Content"
+            content: doc?.text?.content || "Content",
+            worldId: this.config.worldId
         }
         const response = await this.makeRequest('/notes', 'POST', payload);
         doc.setFlag(MODULE_ID, 'externalId', response.id);
     }
 
     async updateJournalEntry(doc, updateData, options, userId) {
+        Lorebound.log("Updating journal entry", doc, updateData);
         const payload = {
             title: doc?.name,
-            content: doc?.text?.content || "Content"
+            content: doc?.text?.content || "Content",
         }
         const externalId = doc.getFlag(MODULE_ID, 'externalId');
         if (!externalId) return;
