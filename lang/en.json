@@ -15,6 +15,7 @@
   "LOREBOUND.Settings.Status.Connected": "Connected to Lorebound",
   "LOREBOUND.Settings.Status.Disconnected": "Not connected",
   "LOREBOUND.Settings.Status.TokenExpires": "Token expires {time}",
+  "LOREBOUND.Settings.AllowedJournal": "Allowed Journal Folders (comma-separated)",
   "LOREBOUND.Settings.WorldId": "World ID",
   "LOREBOUND.Settings.TestSync": "Send Test Sync",
   "LOREBOUND.Sync.HeaderButton": "Sync Lorebound",

@@ -128,6 +128,7 @@ class LoreboundConfig {
             tokenUrl: "https://auth.niclee.dev/token",
             apiBaseUrl: "https://apilorebound.niclee.dev/api",
             redirectUrl: current?.redirectUrl ?? `${window.location.origin}/modules/${MODULE_ID}/oauth-callback.html`,
+            allowedJournal: current?.allowedJournal?.split(",") ?? null,
         };
     }
 
@@ -336,6 +337,9 @@ class LoreboundSync {
 
     async createJournalEntry(doc, options, userId) {
         Lorebound.log("Creating journal entry", doc);
+        if (this.config.allowedJournal && !this.config.allowedJournal.includes(doc.parent.name)) {
+            return;
+        }
         const payload = {
             title: doc?.name,
             content: doc?.text?.content || "Content",
@@ -347,6 +351,9 @@ class LoreboundSync {
 
     async updateJournalEntry(doc, updateData, options, userId) {
         Lorebound.log("Updating journal entry", doc, updateData);
+        if (this.config.allowedJournal && !this.config.allowedJournal.includes(doc.parent.name)) {
+            return;
+        }
         const payload = {
             title: doc?.name,
             content: doc?.text?.content || "Content",
@@ -361,6 +368,7 @@ class LoreboundSync {
 
     async makeRequest(endpoint, method, payload) {
         const token = await this.ensureToken();
+        if(!token) return;
         const url = `${this.config.apiBaseUrl}${endpoint}`;
         let response = await fetch(url, {
             method,
