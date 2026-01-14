@@ -128,7 +128,7 @@ class LoreboundConfig {
             tokenUrl: "https://auth.niclee.dev/token",
             apiBaseUrl: "https://apilorebound.niclee.dev/api",
             redirectUrl: current?.redirectUrl ?? `${window.location.origin}/modules/${MODULE_ID}/oauth-callback.html`,
-            allowedJournal: current?.allowedJournal?.split(",") ?? null,
+            allowedJournals: current?.allowedJournals?.split(",") ?? null,
         };
     }
 
@@ -315,6 +315,7 @@ class LoreboundSync {
     constructor() {
         Hooks.on("createJournalEntryPage", this.createJournalEntry.bind(this));
         Hooks.on("updateJournalEntryPage", this.updateJournalEntry.bind(this));
+        Hooks.on("deleteJournalEntryPage", this.deleteJournalEntry.bind(this));
     }
 
     get config() {
@@ -337,7 +338,7 @@ class LoreboundSync {
 
     async createJournalEntry(doc, options, userId) {
         Lorebound.log("Creating journal entry", doc);
-        if (this.config.allowedJournal && !this.config.allowedJournal.includes(doc.parent.name)) {
+        if (this.config.allowedJournals && !this.config.allowedJournals.includes(doc.parent.name)) {
             return;
         }
         const payload = {
@@ -351,7 +352,7 @@ class LoreboundSync {
 
     async updateJournalEntry(doc, updateData, options, userId) {
         Lorebound.log("Updating journal entry", doc, updateData);
-        if (this.config.allowedJournal && !this.config.allowedJournal.includes(doc.parent.name)) {
+        if (this.config.allowedJournals && !this.config.allowedJournals.includes(doc.parent.name)) {
             return;
         }
         const payload = {
@@ -364,6 +365,19 @@ class LoreboundSync {
             return;
         };
         await this.makeRequest(`/notes/${externalId}`, 'PUT', payload);
+    }
+
+    async deleteJournalEntry(doc, options, userId) {
+        Lorebound.log("Deleting journal entry", doc);
+        if (this.config.allowedJournals && !this.config.allowedJournals.includes(doc.parent.name)) {
+            return;
+        }
+        const externalId = doc.getFlag(MODULE_ID, 'externalId');
+        if (!externalId) {
+            Lorebound.warn("No externalId flag found on journal entry", doc, doc.getFlag(MODULE_ID, 'externalId'));
+            return;
+        };
+        await this.makeRequest(`/notes/${externalId}`, 'DELETE');
     }
 
     async makeRequest(endpoint, method, payload) {
