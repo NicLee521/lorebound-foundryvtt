@@ -22,7 +22,7 @@
             "path": "lang/en.json"
         }
     ],
-    "url": "https://github.com/nicholaslee/lorebound-foundryvtt",
-    "manifest": "https://raw.githubusercontent.com/nicholaslee/lorebound-foundryvtt/main/module.json",
-    "download": "https://github.com/nicholaslee/lorebound-foundryvtt/archive/refs/heads/main.zip"
+    "url": "https://github.com/niclee521/lorebound-foundryvtt",
+    "manifest": "https://raw.githubusercontent.com/niclee521/lorebound-foundryvtt/main/module.json",
+    "download": "https://github.com/niclee521/lorebound-foundryvtt/archive/refs/heads/main.zip"
 }
