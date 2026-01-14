@@ -342,6 +342,7 @@ class LoreboundSync {
             worldId: this.config.worldId
         }
         const response = await this.makeRequest('/notes', 'POST', payload);
+        Lorebound.log("Lorebound create response", response);
         doc.setFlag(MODULE_ID, 'externalId', response.id);
     }
 
@@ -352,7 +353,10 @@ class LoreboundSync {
             content: doc?.text?.content || "Content",
         }
         const externalId = doc.getFlag(MODULE_ID, 'externalId');
-        if (!externalId) return;
+        if (!externalId) {
+            Lorebound.warn("No externalId flag found on journal entry", doc, doc.getFlag(MODULE_ID, 'externalId'));
+            return;
+        };
         await this.makeRequest(`/notes/${externalId}`, 'PUT', payload);
     }
 
