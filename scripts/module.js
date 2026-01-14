@@ -88,10 +88,6 @@ class LoreboundSettingsForm extends FormApplication {
             event.preventDefault();
             this._handleLogout();
         });
-        html[0]?.querySelector("button[data-action='test-sync']")?.addEventListener("click", async (event) => {
-            event.preventDefault();
-            await Lorebound.sync?.runTestSync();
-        });
     }
 
     async _updateObject(_event, formData) {
@@ -129,8 +125,7 @@ class LoreboundConfig {
             clientSecret: current?.clientSecret ?? "",
             authorizeUrl: "https://auth.niclee.dev/authorize",
             tokenUrl: "https://auth.niclee.dev/token",
-            apiBaseUrl: "https://apilorebound.niclee.dev",
-            journalEndpoint: "/api/notes",
+            apiBaseUrl: "https://apilorebound.niclee.dev/api",
             redirectUrl: current?.redirectUrl ?? `${window.location.origin}/modules/${MODULE_ID}/oauth-callback.html`,
         };
     }
@@ -316,7 +311,8 @@ class LoreboundOAuth {
 
 class LoreboundSync {
     constructor() {
-        Hooks.on("renderJournalSheet", this._injectHeaderButton.bind(this));
+        Hooks.on("createJournalEntryPage", this.createJournalEntry.bind(this));
+        Hooks.on("updateJournalEntryPage", this.updateJournalEntry.bind(this));
     }
 
     get config() {
@@ -337,80 +333,44 @@ class LoreboundSync {
         return null;
     }
 
-    async syncJournal(journal) {
-        Lorebound.log("Syncing journal", journal.toJSON());
-        if (!journal) return;
-        const token = await this.ensureToken();
-        if (!token?.access_token) return;
-        try {
-            const payload = await this._buildJournalPayload(journal);
-            const endpoint = this._resolveEndpoint();
-            const response = await fetch(endpoint, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `${token.token_type || "Bearer"} ${token.access_token}`
-                },
-                body: JSON.stringify(payload)
-            });
-            if (!response.ok) {
-                Lorebound.warn("Lorebound sync error", await response.text());
-                ui.notifications.error(game.i18n.localize("LOREBOUND.Sync.Notification.FetchError"));
-                return;
-            }
-            ui.notifications.info(game.i18n.localize("LOREBOUND.Sync.Notification.Success"));
-        } catch (error) {
-            Lorebound.error("Lorebound sync failed", error);
-            ui.notifications.error(game.i18n.localize("LOREBOUND.Sync.Notification.Error"));
+    async createJournalEntry(doc, options, userId) {
+        const payload = {
+            title: doc?.name,
+            content: doc?.text?.content || "Content"
         }
+        const response = await this.makeRequest('/notes', 'POST', payload);
+        doc.setFlag(MODULE_ID, 'externalId', response.id);
     }
 
-    async runTestSync() {
-        const journal = game.journal?.contents?.[0];
-        if (!journal) {
-            ui.notifications.warn("No journal entries available for test sync.");
+    async updateJournalEntry(doc, updateData, options, userId) {
+        const payload = {
+            title: doc?.name,
+            content: doc?.text?.content || "Content"
+        }
+        const externalId = doc.getFlag(MODULE_ID, 'externalId');
+        if (!externalId) return;
+        await this.makeRequest(`/notes/${externalId}`, 'PUT', payload);
+    }
+
+    async makeRequest(endpoint, method, payload) {
+        const token = await this.ensureToken();
+        const url = `${this.config.apiBaseUrl}${endpoint}`;
+        let response = await fetch(url, {
+            method,
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `${token.token_type || "Bearer"} ${token.access_token}`
+            },
+            body: JSON.stringify(payload)
+        });
+        if (!response.ok) {
+            Lorebound.warn("Lorebound api error", await response.text());
+            ui.notifications.error(game.i18n.localize("LOREBOUND.Sync.Notification.FetchError"));
             return;
         }
-        await this.syncJournal(journal);
+        return response.json();
     }
 
-    _injectHeaderButton(app, html, data) {
-        const button = {
-            label: game.i18n.localize("LOREBOUND.Sync.HeaderButton"),
-            class: "lorebound-sync",
-            icon: "fas fa-cloud-upload-alt",
-            onclick: () => this.syncJournal(app.object)
-        };
-        data.headerButtons.unshift(button);
-    }
-
-    async _buildJournalPayload(journal) {
-        await journal?.load();
-        const pages = journal?.pages?.contents?.map((page) => ({
-            id: page.id,
-            name: page.name,
-            type: page.type,
-            text: page.text?.content ?? null,
-            image: page.src ?? null,
-            ownership: page.ownership ?? {}
-        })) ?? [];
-        return {
-            id: journal.uuid,
-            name: journal.name,
-            folder: journal.folder?.name ?? null,
-            tags: Array.from(journal.system?.tags ?? []),
-            updatedAt: journal.updated ?? new Date().toISOString(),
-            author: journal.author?.id ?? null,
-            pages
-        };
-    }
-
-    _resolveEndpoint() {
-        const config = this.config;
-        const base = (config.apiBaseUrl || "").replace(/\/$/, "");
-        const path = config.journalEndpoint || "/api/foundry/journals";
-        return `${base}${path.startsWith("/") ? "" : "/"}${path}`;
-    }
 }
 
 globalThis.Lorebound = Lorebound;
