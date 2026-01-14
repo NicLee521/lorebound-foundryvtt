@@ -342,8 +342,7 @@ class LoreboundSync {
             worldId: this.config.worldId
         }
         const response = await this.makeRequest('/notes', 'POST', payload);
-        Lorebound.log("Lorebound create response", response);
-        doc.setFlag(MODULE_ID, 'externalId', response.id);
+        doc.setFlag(MODULE_ID, 'externalId', response._id);
     }
 
     async updateJournalEntry(doc, updateData, options, userId) {
