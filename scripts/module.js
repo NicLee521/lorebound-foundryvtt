@@ -128,7 +128,7 @@ class LoreboundConfig {
             tokenUrl: "https://auth.niclee.dev/token",
             apiBaseUrl: "https://apilorebound.niclee.dev/api",
             redirectUrl: current?.redirectUrl ?? `${window.location.origin}/modules/${MODULE_ID}/oauth-callback.html`,
-            allowedJournals: current?.allowedJournals?.split(",") ?? null,
+            allowedJournals: current?.allowedJournals ?? null,
         };
     }
 
@@ -319,7 +319,11 @@ class LoreboundSync {
     }
 
     get config() {
-        return LoreboundConfig.get();
+        const config = LoreboundConfig.get();
+        if (config.allowedJournals && typeof config.allowedJournals === "string") {
+            config.allowedJournals = config.allowedJournals.split(",").map(s => s.trim());
+        }
+        return config;
     }
 
     async ensureToken() {
