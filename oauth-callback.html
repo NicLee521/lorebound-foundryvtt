@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Lorebound OAuth Callback</title>
+  <script>
+    (function () {
+      function postResult(payload) {
+        if (!window.opener) return;
+        const message = Object.assign({ source: "LoreboundOAuth" }, payload);
+        window.opener.postMessage(message, window.location.origin);
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      if (params.has("error")) {
+        postResult({
+          error: params.get("error"),
+          error_description: params.get("error_description"),
+          state: params.get("state")
+        });
+        window.close();
+        return;
+      }
+
+      const code = params.get("code");
+      const state = params.get("state");
+      if (code) {
+        postResult({ code, state });
+      } else {
+        postResult({ error: "missing_code" });
+      }
+      window.close();
+    })();
+  </script>
+</head>
+<body>
+  <p>Authentication complete. You can close this window.</p>
+</body>
+</html>

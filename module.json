@@ -1,0 +1,28 @@
+{
+    "id": "Lorebound",
+    "title": "Lorebound - A Foundry VTT integration with the lorebound website",
+    "description": "A module made to sync notes to the lorebound website.",
+    "authors": [
+        {
+            "name": "Nic Lee"
+        }
+    ],
+    "version": "1.0.0",
+    "compatibility": {
+        "minimum": "13",
+        "verified": "13"
+    },
+    "esmodules": [
+        "scripts/module.js"
+    ],
+    "languages": [
+        {
+            "lang": "en",
+            "name": "English",
+            "path": "lang/en.json"
+        }
+    ],
+    "url": "https://github.com/nicholaslee/lorebound-foundryvtt",
+    "manifest": "https://raw.githubusercontent.com/nicholaslee/lorebound-foundryvtt/main/module.json",
+    "download": "https://github.com/nicholaslee/lorebound-foundryvtt/archive/refs/heads/main.zip"
+}
