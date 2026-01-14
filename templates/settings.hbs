@@ -1,37 +1,13 @@
 <form class="lorebound-settings">
   <section class="form-body">
     <div class="form-group">
-      <label>{{localize "LOREBOUND.Settings.ClientId"}}</label>
-      <input type="text" name="config.clientId" value="{{config.clientId}}" placeholder="client_123" />
-    </div>
-    <div class="form-group">
       <label>{{localize "LOREBOUND.Settings.ClientSecret"}}</label>
       <input type="password" name="config.clientSecret" value="{{config.clientSecret}}" autocomplete="off" />
-    </div>
-    <div class="form-group">
-      <label>{{localize "LOREBOUND.Settings.AuthUrl"}}</label>
-      <input type="url" name="config.authorizeUrl" value="{{config.authorizeUrl}}" placeholder="https://auth.example.com/oauth/authorize" />
-    </div>
-    <div class="form-group">
-      <label>{{localize "LOREBOUND.Settings.TokenUrl"}}</label>
-      <input type="url" name="config.tokenUrl" value="{{config.tokenUrl}}" placeholder="https://auth.example.com/oauth/token" />
-    </div>
-    <div class="form-group">
-      <label>{{localize "LOREBOUND.Settings.ApiBaseUrl"}}</label>
-      <input type="url" name="config.apiBaseUrl" value="{{config.apiBaseUrl}}" placeholder="https://api.example.com" />
-    </div>
-    <div class="form-group">
-      <label>{{localize "LOREBOUND.Settings.JournalEndpoint"}}</label>
-      <input type="text" name="config.journalEndpoint" value="{{config.journalEndpoint}}" placeholder="/api/foundry/journals" />
     </div>
     <div class="form-group">
       <label>{{localize "LOREBOUND.Settings.RedirectUrl"}}</label>
       <input type="url" name="config.redirectUrl" value="{{config.redirectUrl}}" readonly />
       <p class="notes">Use this redirect URL when configuring the OAuth client.</p>
-    </div>
-    <div class="form-group">
-      <label>{{localize "LOREBOUND.Settings.Scope"}}</label>
-      <input type="text" name="config.scope" value="{{config.scope}}" placeholder="openid profile offline_access" />
     </div>
     <div class="form-group status">
       <i class="{{status.icon}}"></i>

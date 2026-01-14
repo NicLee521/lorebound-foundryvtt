@@ -316,7 +316,7 @@ class LoreboundOAuth {
 
 class LoreboundSync {
     constructor() {
-        Hooks.on("getJournalSheetHeaderButtons", this._injectHeaderButton.bind(this));
+        Hooks.on("renderJournalSheet", this._injectHeaderButton.bind(this));
     }
 
     get config() {
@@ -338,6 +338,7 @@ class LoreboundSync {
     }
 
     async syncJournal(journal) {
+        Lorebound.log("Syncing journal", journal.toJSON());
         if (!journal) return;
         const token = await this.ensureToken();
         if (!token?.access_token) return;
@@ -366,8 +367,6 @@ class LoreboundSync {
 
     async runTestSync() {
         const journal = game.journal?.contents?.[0];
-        console.log("Lorebound | Running test sync for journal:", game.journal);
-        console.log("Lorebound | Running test sync for journal:", journal);
         if (!journal) {
             ui.notifications.warn("No journal entries available for test sync.");
             return;
@@ -375,14 +374,14 @@ class LoreboundSync {
         await this.syncJournal(journal);
     }
 
-    _injectHeaderButton(sheet, buttons) {
+    _injectHeaderButton(app, html, data) {
         const button = {
             label: game.i18n.localize("LOREBOUND.Sync.HeaderButton"),
             class: "lorebound-sync",
             icon: "fas fa-cloud-upload-alt",
-            onclick: () => this.syncJournal(sheet.object)
+            onclick: () => this.syncJournal(app.object)
         };
-        buttons.unshift(button);
+        data.headerButtons.unshift(button);
     }
 
     async _buildJournalPayload(journal) {
