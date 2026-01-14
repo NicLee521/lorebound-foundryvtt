@@ -366,7 +366,7 @@ class LoreboundSync {
 
     async runTestSync() {
         const journal = game.journal?.contents?.[0];
-        Lorebound.log("Running test sync for journal:", journal);
+        console.log("Lorebound | Running test sync for journal:", journal);
         if (!journal) {
             ui.notifications.warn("No journal entries available for test sync.");
             return;
